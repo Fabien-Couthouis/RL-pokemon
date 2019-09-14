@@ -25,18 +25,21 @@ class Client(showdown.Client):
         self.player = ""
 
     def set_player(self):
+        """ Set player var to "p1" or "p2" """
         if self.battle.p1 == self.name:
             self.player = "p1"
         else:
             self.player = "p2"
 
     async def on_challenge_update(self, challenge_data):
+        """ Called when challenged on showdown """
         incoming = challenge_data.get('challengesFrom', {})
         for user, tier in incoming.items():
             if 'ou' in tier:
                 await self.accept_challenge(user, team)
 
     async def on_room_init(self, battle):
+        """ Called at the start of the battle """
         if battle.id.startswith('battle-'):
             self.battle = battle
             self.set_player()
@@ -45,21 +48,31 @@ class Client(showdown.Client):
             await self.battle.say('Hello :)')
 
     async def on_receive(self, *info):
+        """ Called on info received from showdown client """
         print("Received ", info)
         info_type = info[1]
         info_list = info[2]
 
-        # Get player pokemon info
+        # Got player pokemons info
         if info_type == "request" and info_list != ['']:
             jsoned_info = json.loads(info_list[0])
             self.brain.update_poke_list(jsoned_info)
+
+        # Teampreview
         elif info_type == "teampreview":
             first_pokemon = self.brain.choose_teampreview()
             await self.lead_with(first_pokemon)
 
-        # Get opponent pokemon info
+        # Got opponent pokemons info
         elif info_type == "poke":
-            self.brain.fill_opponent_poke_list(info_list)
+            self.brain.fill_opponent_pokemons(info_list)
+
+        # Update opponent pokemons conditions
+        elif info_type == "-damage" and info_list[0].startswith(self.player):
+            self.brain.update_opponent_conditions(info_list)
+
+        elif info_type == "move" and info_list[0].startswith(self.player):
+            self.brain.update_opponent_moves(info_list)
 
         # Play turn
         elif info_type == "turn":
@@ -70,16 +83,24 @@ class Client(showdown.Client):
             elif action == "move":
                 move, mega = self.brain.choose_move()
                 await self.move(move, mega)
-        # Player poke faint
+
+        # Switch on player poke faint
         elif info_type == "faint" and info_list[0].startswith(self.player):
             print("FAINT")
             new_poke = self.brain.choose_on_faint()
             await self.switch(new_poke)
 
-        # Switching move choosen by player
+        # Switching move choosen by player (U-turn, ...)
         elif info_type == "move" and info_list[0].startswith(self.player) and info_list[1] in switching_moves:
             new_poke = self.brain.choose_on_switching_move()
             await self.switch(new_poke)
+
+        # Debug (sent "log" in chat)
+        elif info_type == "c" and info_list[1] == "log":
+            print(self.brain.opponent_pokemons[1])
+            for pokemon in self.brain.opponent_pokemons:
+                print(pokemon.name)
+                print(pokemon.moves)
 
         # End of game
         elif info_type == 'win':
@@ -87,12 +108,15 @@ class Client(showdown.Client):
                 "win" if info_list[0] == self.name else "lost")
 
     async def lead_with(self, pokemon):
+        """Pokemon sent while in teampreview"""
         await self.client.use_command(self.battle.id, 'team', '{}'.format(pokemon.team_id), delay=0, lifespan=math.inf)
 
     async def move(self, move, mega):
+        """Play a move"""
         await self.client.use_command(self.battle.id, 'choose', 'move {}{}'.format(move, " mega" if mega else ''), delay=0, lifespan=math.inf)
 
     async def switch(self, pokemon):
+        """Switch to another pokemon"""
         await self.client.use_command(self.battle.id, 'choose', 'switch {}'.format(pokemon.team_id), delay=0, lifespan=math.inf)
 
 
