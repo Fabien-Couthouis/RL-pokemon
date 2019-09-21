@@ -4,6 +4,7 @@ import showdown
 import logging
 import asyncio
 import json
+import time
 from pprint import pprint
 from brain import Brain, Pokemon
 
@@ -30,6 +31,9 @@ class Client(showdown.Client):
             self.player = "p1"
         else:
             self.player = "p2"
+    
+    async def on_login(self, login_data):
+        await self.search_battles(team, 'gen7ou')
 
     async def on_challenge_update(self, challenge_data):
         """ Called when challenged on showdown """
@@ -120,4 +124,11 @@ class Client(showdown.Client):
         await self.client.use_command(self.battle.id, 'choose', 'switch {}'.format(pokemon.team_id), delay=0, lifespan=math.inf)
 
 
-Client(name=username, password=password).start()
+
+if __name__ == '__main__':
+    try:
+        client = Client(name=username, password=password)
+        client.start()
+    except KeyboardInterrupt:
+        raise
+
