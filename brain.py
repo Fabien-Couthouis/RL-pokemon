@@ -11,6 +11,7 @@ class Pokemon():
         self.item = item
         self.status = None
         self.can_mega = False
+        self.Z_type = None
 
         if moves is None:
             self.moves = []
@@ -23,14 +24,33 @@ class Pokemon():
             self.can_mega = True
         else:
             self.can_mega = False
+        if self.item.endswith("z"):
+            self.Z_type = self.get_type_from_Z_stone()
+    
+    def get_type_from_Z_stone(self):
+        if self.item.startswith("electrium"):
+            return "electric"
+        elif self.item.startswith("fairium"):
+            return "fairy"
+        elif self.item.startswith("firium"):
+            return "fire"
+        elif self.item.startswith("flyinium"):
+            return "flying"
+        elif self.item.startswith("icium"):
+            return "ice"
+        elif self.item.startswith("psychium"):
+            return "psychic"
+        else:
+            return self.item.replace('iumz', '').replace('in', '')
 
     def __str__(self):
         return "Pokemon {name} with teamid {teamid}".format(name=self.name, teamid=self.team_id)
 
 
 class Brain():
-    def __init__(self, player_name):
+    def __init__(self, player_name, movedex):
         self.player_name = player_name
+        self.movedex = movedex
         self.player = None
         self.battle = None
         self.active_poke = None
@@ -152,10 +172,15 @@ class Brain():
         move = self.get_random_move(valid_moves)
         # Mega only if not already mega
         mega = self.active_poke.can_mega
+        z = False
         if mega:
             self.active_poke.can_mega = False
-
-        return move, mega
+        if self.active_poke.Z_type is not None:
+            if self.active_poke.Z_type == self.movedex[move]["type"].lower():
+                z = True
+                self.active_poke.item = None
+                self.active_poke.Z_type = None
+        return move, mega, z
 
     def choose_teampreview(self):
         """Select pokemon for teampreview"""

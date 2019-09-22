@@ -12,9 +12,9 @@ SWITCHING_MOVES = ["U-turn", "Volt Switch"]
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password, team, search_battle_on_login=False):
+    def __init__(self, name, password, team, movedex_string, search_battle_on_login=False):
         super().__init__(name, password)
-        self.brain = Brain(player_name=name)
+        self.brain = Brain(player_name=name, movedex=json.loads(movedex_string))
         self.player = ""
         self.team = team
         self.search_battle_on_login = search_battle_on_login
@@ -81,8 +81,8 @@ class Client(showdown.Client):
                 new_poke = self.brain.choose_on_switch()
                 await self.switch(new_poke)
             elif action == "move":
-                move, mega = self.brain.choose_move()
-                await self.move(move, mega)
+                move, mega, z = self.brain.choose_move()
+                await self.move(move, mega, z)
 
         # Switch on player poke faint
         elif info_type == "faint" and info_list[0].startswith(self.player):
@@ -111,9 +111,11 @@ class Client(showdown.Client):
         """Pokemon sent while in teampreview"""
         await self.client.use_command(self.battle.id, 'team', '{}'.format(pokemon.team_id), delay=0, lifespan=inf)
 
-    async def move(self, move, mega):
+    async def move(self, move, mega, z):
         """Play a move"""
-        await self.client.use_command(self.battle.id, 'choose', 'move {}{}'.format(move, " mega" if mega else ''), delay=0, lifespan=inf)
+        mega_str = " mega" if mega else ''
+        z_str = " zmove" if z else ''
+        await self.client.use_command(self.battle.id, 'choose', 'move {}{}{}'.format(move, mega_str, z_str), delay=0, lifespan=inf)
 
     async def switch(self, pokemon):
         """Switch to another pokemon"""
