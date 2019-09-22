@@ -14,7 +14,8 @@ class Client(showdown.Client):
 
     def __init__(self, name, password, team, movedex_string, search_battle_on_login=False):
         super().__init__(name, password)
-        self.brain = Brain(player_name=name, movedex=json.loads(movedex_string))
+        self.brain = Brain(
+            player_name=name, movedex=json.loads(movedex_string))
         self.player = ""
         self.team = team
         self.search_battle_on_login = search_battle_on_login
@@ -71,7 +72,7 @@ class Client(showdown.Client):
         elif info_type == "-damage" and info_list[0].startswith(self.player):
             self.brain.update_opponent_conditions(info_list)
 
-        elif info_type == "move" and info_list[0].startswith(self.player):
+        elif info_type == "move" and not info_list[0].startswith(self.player):
             self.brain.update_opponent_moves(info_list)
 
         # Play turn
@@ -92,6 +93,7 @@ class Client(showdown.Client):
 
         # Switching move choosen by player (U-turn, ...)
         elif info_type == "move" and info_list[0].startswith(self.player) and info_list[1] in SWITCHING_MOVES:
+            print("Switching move")
             new_poke = self.brain.choose_on_switching_move()
             await self.switch(new_poke)
 
