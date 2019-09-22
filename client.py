@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
-import math
 import showdown
-import logging
 import asyncio
 import json
-import time
-from pprint import pprint
+from math import inf
+from pprint import pprint  # debug
 from brain import Brain, Pokemon
 
 
-switching_moves = ["U-turn", "Volt Switch"]
-
-logging.basicConfig(level=logging.INFO)
-with open('data/login.txt', 'rt') as f,\
-        open('data/mega_charizard.txt', 'rt') as team:
-    team = team.read()
-    username, password = f.read().strip().splitlines()
+SWITCHING_MOVES = ["U-turn", "Volt Switch"]
 
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password):
+    def __init__(self, name, password, team, search_battle_on_login=False):
         super().__init__(name, password)
         self.brain = Brain(player_name=name)
         self.player = ""
+        self.team = team
+        self.search_battle_on_login = search_battle_on_login
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
@@ -31,16 +25,18 @@ class Client(showdown.Client):
             self.player = "p1"
         else:
             self.player = "p2"
-    
+
     async def on_login(self, login_data):
-        await self.search_battles(team, 'gen7ou')
+        """ Called when logged on showdown """
+        if self.search_battle_on_login:
+            await self.search_battles(self.team, 'gen7ou')
 
     async def on_challenge_update(self, challenge_data):
         """ Called when challenged on showdown """
         incoming = challenge_data.get('challengesFrom', {})
         for user, tier in incoming.items():
             if 'ou' in tier:
-                await self.accept_challenge(user, team)
+                await self.accept_challenge(user, self.team)
 
     async def on_room_init(self, battle):
         """ Called at the start of the battle """
@@ -95,7 +91,7 @@ class Client(showdown.Client):
             await self.switch(new_poke)
 
         # Switching move choosen by player (U-turn, ...)
-        elif info_type == "move" and info_list[0].startswith(self.player) and info_list[1] in switching_moves:
+        elif info_type == "move" and info_list[0].startswith(self.player) and info_list[1] in SWITCHING_MOVES:
             new_poke = self.brain.choose_on_switching_move()
             await self.switch(new_poke)
 
@@ -113,22 +109,12 @@ class Client(showdown.Client):
 
     async def lead_with(self, pokemon):
         """Pokemon sent while in teampreview"""
-        await self.client.use_command(self.battle.id, 'team', '{}'.format(pokemon.team_id), delay=0, lifespan=math.inf)
+        await self.client.use_command(self.battle.id, 'team', '{}'.format(pokemon.team_id), delay=0, lifespan=inf)
 
     async def move(self, move, mega):
         """Play a move"""
-        await self.client.use_command(self.battle.id, 'choose', 'move {}{}'.format(move, " mega" if mega else ''), delay=0, lifespan=math.inf)
+        await self.client.use_command(self.battle.id, 'choose', 'move {}{}'.format(move, " mega" if mega else ''), delay=0, lifespan=inf)
 
     async def switch(self, pokemon):
         """Switch to another pokemon"""
-        await self.client.use_command(self.battle.id, 'choose', 'switch {}'.format(pokemon.team_id), delay=0, lifespan=math.inf)
-
-
-
-if __name__ == '__main__':
-    try:
-        client = Client(name=username, password=password)
-        client.start()
-    except KeyboardInterrupt:
-        raise
-
+        await self.client.use_command(self.battle.id, 'choose', 'switch {}'.format(pokemon.team_id), delay=0, lifespan=inf)
