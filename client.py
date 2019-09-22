@@ -27,6 +27,9 @@ class Client(showdown.Client):
         else:
             self.player = "p2"
 
+    def is_player(self, player_info):
+        return player_info.startswith(self.player)
+
     async def on_login(self, login_data):
         """ Called when logged on showdown """
         if self.search_battle_on_login:
@@ -69,10 +72,10 @@ class Client(showdown.Client):
             self.brain.fill_opponent_pokemons(info_list)
 
         # Update opponent pokemons conditions
-        elif info_type == "-damage" and info_list[0].startswith(self.player):
+        elif info_type == "-damage" and self.is_player(info_list[0]):
             self.brain.update_opponent_conditions(info_list)
 
-        elif info_type == "move" and not info_list[0].startswith(self.player):
+        elif info_type == "move" and not self.is_player(info_list[0]):
             self.brain.update_opponent_moves(info_list)
 
         # Play turn
@@ -86,13 +89,13 @@ class Client(showdown.Client):
                 await self.move(move, mega, z)
 
         # Switch on player poke faint
-        elif info_type == "faint" and info_list[0].startswith(self.player):
+        elif info_type == "faint" and self.is_player(info_list[0]):
             print("FAINT")
             new_poke = self.brain.choose_on_faint()
             await self.switch(new_poke)
 
         # Switching move choosen by player (U-turn, ...)
-        elif info_type == "move" and info_list[0].startswith(self.player) and info_list[1] in SWITCHING_MOVES:
+        elif info_type == "move" and self.is_player(info_list[0]) and info_list[1] in SWITCHING_MOVES:
             print("Switching move")
             new_poke = self.brain.choose_on_switching_move()
             await self.switch(new_poke)
