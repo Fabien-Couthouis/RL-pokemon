@@ -9,16 +9,25 @@ from brain import Brain, Pokemon
 
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
 
+IN_GAME = 0
+IDLE = 1
+
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password, team, movedex_string, search_battle_on_login=False):
+    def __init__(self, name, password, team, movedex_string=None, search_battle_on_login=False):
         super().__init__(name, password)
+        if movedex_string == None:
+            try:
+                with open('data/moves.json') as movedex_file:
+                    movedex_string = movedex_file.read()
         self.brain = Brain(
             player_name=name, movedex=json.loads(movedex_string))
         self.player = ""
         self.team = team
         self.search_battle_on_login = search_battle_on_login
+        self.opponent_fainted_last_turn = False
+        self.status = IDLE
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
@@ -47,6 +56,7 @@ class Client(showdown.Client):
         if battle.id.startswith('battle-'):
             self.battle = battle
             self.set_player()
+            self.status = IN_GAME
 
             await asyncio.sleep(2)
             await self.battle.say('Hello :)')
@@ -109,6 +119,7 @@ class Client(showdown.Client):
 
         # End of game
         elif info_type == 'win':
+            self.status == IDLE
             self.brain.set_game_result(
                 "win" if info_list[0] == self.name else "lost")
 
