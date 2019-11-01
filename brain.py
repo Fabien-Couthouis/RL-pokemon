@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
 
-
 class Pokemon():
     def __init__(self, team_id, name, condition=None, ability=None, moves=None, item=None):
         self.team_id = team_id
