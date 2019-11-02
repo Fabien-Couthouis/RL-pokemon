@@ -1,4 +1,5 @@
 import gym
+import webbrowser
 from gym import error, spaces, utils
 from gym.utils import seeding
 
@@ -18,19 +19,23 @@ class ShowdownEnv(gym.Env):
                 team = team.read()
                 username, password = f.read().strip().splitlines()
         self.client = Client(name=username, password=password)
-        self.action_space = spaces.Discrete(4)
-    
+        self.action_space = spaces.Discrete(9)
+        self.viewer = False
+  
     def _start_server(self):
         self.client.start()
 
     def step(self, action):
         self._take_action(action)
-        ...
+        ob = self.client.get_env_state()
+        reward = self._get_reward()
+        episode_over = self.client.status != IN_GAME
+        return ob, reward, episode_over, {}
 
     def _take_action(self, action):
         ...
 
-    def _get_reward(self):
+    def _get_reward(self): #Sensible but simple reward function
         if self.client.opponent_fainted_last_turn:
             return 1
         else:
@@ -38,9 +43,10 @@ class ShowdownEnv(gym.Env):
 
     def reset(self):
         ...
-
+        
     def render(self, mode='human'):
-        ...
+        if self.viewer == False:
+            webbrowser.open('https://play.pokemonshowdown.com/')
 
     def close(self):
         ...

@@ -4,7 +4,7 @@ import asyncio
 import json
 from math import inf
 from pprint import pprint  # debug
-from brain import Brain, Pokemon
+from .brain import Brain, Pokemon
 
 
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
@@ -38,6 +38,9 @@ class Client(showdown.Client):
 
     def is_player(self, player_info):
         return player_info.startswith(self.player)
+    
+    def get_env_state(self):
+        return [self.current_turn, self.brain.active_poke, self.brain.player_pokemons, self.brain.opponent_pokemons]
 
     async def on_login(self, login_data):
         """ Called when logged on showdown """
