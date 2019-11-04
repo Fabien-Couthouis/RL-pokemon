@@ -18,12 +18,14 @@ class ShowdownEnv(gym.Env):
                     open('data/team.txt', 'rt') as team:
                 team = team.read()
                 username, password = f.read().strip().splitlines()
-        self.client = Client(name=username, password=password)
-        self.action_space = spaces.Discrete(9)
+        self.client = Client(name=username, password=password, team=team)
+        self.action_space = spaces.Discrete(10)
         self.viewer = False
+        self.action_invalid = False
   
     def _start_server(self):
         self.client.start()
+        self.client.search_battles(self.client.team, 'ou')
 
     def step(self, action):
         self._take_action(action)
@@ -33,20 +35,37 @@ class ShowdownEnv(gym.Env):
         return ob, reward, episode_over, {}
 
     def _take_action(self, action):
-        ...
+        if action < 4: #Agent chose to use a move from current poke
+            if self.client.check_if_move_valid(action): #TODO
+                self.client.move_from_id(action)
+            else:
+                self.action_invalid = True
+        elif action < 10: #Agent chose to switch to another pokemon
+            if self.client.check_if_switch_valid(action): #TODO
+                self.client.switch_from_id(action-4)
+            else:
+                self.action_invalid = True
+        else:
+            print("Unknown action")
+
 
     def _get_reward(self): #Sensible but simple reward function
-        if self.client.opponent_fainted_last_turn:
+        if self.client.status == WIN:
             return 1
+        elif self.action_invalid:
+            self.action_invalid = False
+            return -1
         else:
             return 0
 
     def reset(self):
-        ...
+        if self.client.status == IN_GAME:
+            self.client.forfeit(self.client.battle)
+        self.client.search_battles(self.client.team, 'ou')
         
     def render(self, mode='human'):
         if self.viewer == False:
             webbrowser.open('https://play.pokemonshowdown.com/')
 
     def close(self):
-        ...
+        self.client.forfeit(self.client.battle)

@@ -80,6 +80,11 @@ class Brain():
             selecting_list = list(filter(None, self.player_pokemons))
 
         return random.choice(selecting_list)
+    
+    def get_poke_from_id(self, id):
+        """Get a pokemon from player's pokemon list according to its id"""
+        pokemons = self.player_pokemons.copy()
+        return pokemons[id]
 
     def get_opponent_poke_from_name(self, poke_name):
         """Get a pokemon from his name in opponent pokemons list """
@@ -154,9 +159,9 @@ class Brain():
             pokemon.moves.append(move)
             print("move appened")
 
-    def choose_move(self):
+    def choose_move(self, random=True, id=0):
         """Select a valid move for the active pokemon this turn"""
-        # Notes : pokemon will always mega if possible. Random move for now
+        # Notes : pokemon will always mega if possible. Random or from id
         self.current_turn += 1
         # Select a non disabled move
         print("CHOOSE MOVE IN", self.active_poke.moves)
@@ -168,7 +173,10 @@ class Brain():
         else:
             valid_moves = self.active_poke.moves
 
-        move = self.get_random_move(valid_moves)
+        if random:
+            move = self.get_random_move(valid_moves)
+        else:
+            move = self.active_poke.moves[id]
         # Mega only if not already mega
         mega = self.active_poke.can_mega
         z = False

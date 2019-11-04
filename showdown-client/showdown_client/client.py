@@ -10,7 +10,9 @@ from .brain import Brain, Pokemon
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
 
 IN_GAME = 0
-IDLE = 1
+LOSS = 1
+WIN = 2
+IDLE = 3
 
 
 class Client(showdown.Client):
@@ -122,9 +124,14 @@ class Client(showdown.Client):
 
         # End of game
         elif info_type == 'win':
-            self.status == IDLE
-            self.brain.set_game_result(
-                "win" if info_list[0] == self.name else "lost")
+            a = ""
+            if info_list[0] == self.name:
+                self.status == WIN
+                a = "win"
+            else:
+                self.status == LOSS
+                a = "loss"
+            self.brain.set_game_result(a)
 
     async def lead_with(self, pokemon):
         """Pokemon sent while in teampreview"""
@@ -135,6 +142,16 @@ class Client(showdown.Client):
         mega_str = " mega" if mega else ''
         z_str = " zmove" if z else ''
         await self.client.use_command(self.battle.id, 'choose', 'move {}{}{}'.format(move, mega_str, z_str), delay=0, lifespan=inf)
+    
+    async def move_from_id(self, id):
+        """Play a move by chosing it from its id"""
+        move, mega, z = self.brain.choose_move(random=False, id=id)
+        await self.move(move, mega, z)
+    
+    async def switch_from_id(self, id):
+        """Switch to another pokemon according to its id"""
+        pokemon = self.brain.get_poke_from_id(id)
+        await self.switch(pokemon)
 
     async def switch(self, pokemon):
         """Switch to another pokemon"""
