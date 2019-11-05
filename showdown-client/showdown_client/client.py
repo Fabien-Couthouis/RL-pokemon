@@ -17,12 +17,14 @@ IDLE = 3
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password, team, movedex_string=None, search_battle_on_login=False):
+    def __init__(self, name, password, team, movedex_string=None, search_battle_on_login=False, auto_random=False):
         super().__init__(name, password)
         if movedex_string == None:
             try:
                 with open('data/moves.json') as movedex_file:
                     movedex_string = movedex_file.read()
+            except FileNotFoundError:
+                print("Could not find movedex file")
         self.brain = Brain(
             player_name=name, movedex=json.loads(movedex_string))
         self.player = ""
@@ -30,6 +32,7 @@ class Client(showdown.Client):
         self.search_battle_on_login = search_battle_on_login
         self.opponent_fainted_last_turn = False
         self.status = IDLE
+        self.auto_random = auto_random
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
@@ -42,7 +45,12 @@ class Client(showdown.Client):
         return player_info.startswith(self.player)
     
     def get_env_state(self):
-        return [self.current_turn, self.brain.active_poke, self.brain.player_pokemons, self.brain.opponent_pokemons]
+        return [self.brain.current_turn, self.brain.active_poke, self.brain.player_pokemons, self.brain.opponent_pokemons]
+    
+    def wait_for_next_turn(self):
+        turn = self.brain.current_turn
+        while self.brain.current_turn != turn + 1:
+            pass
 
     async def on_login(self, login_data):
         """ Called when logged on showdown """
@@ -61,7 +69,6 @@ class Client(showdown.Client):
         if battle.id.startswith('battle-'):
             self.battle = battle
             self.set_player()
-            self.status = IN_GAME
 
             await asyncio.sleep(2)
             await self.battle.say('Hello :)')
@@ -95,25 +102,30 @@ class Client(showdown.Client):
 
         # Play turn
         elif info_type == "turn":
-            action = self.brain.choose_action()
-            if action == "switch":
-                new_poke = self.brain.choose_on_switch()
-                await self.switch(new_poke)
-            elif action == "move":
-                move, mega, z = self.brain.choose_move()
-                await self.move(move, mega, z)
+            if self.brain.current_turn <= 1:
+                self.status = IN_GAME
+            if self.auto_random:
+                action = self.brain.choose_action()
+                if action == "switch":
+                    new_poke = self.brain.choose_on_switch()
+                    await self.switch(new_poke)
+                elif action == "move":
+                    move, mega, z = self.brain.choose_move()
+                    await self.move(move, mega, z)
 
         # Switch on player poke faint
         elif info_type == "faint" and self.is_player(info_list[0]):
             print("FAINT")
-            new_poke = self.brain.choose_on_faint()
-            await self.switch(new_poke)
+            if self.auto_random:
+                new_poke = self.brain.choose_on_faint()
+                await self.switch(new_poke)
 
         # Switching move choosen by player (U-turn, ...)
         elif info_type == "move" and self.is_player(info_list[0]) and info_list[1] in SWITCHING_MOVES:
             print("Switching move")
-            new_poke = self.brain.choose_on_switching_move()
-            await self.switch(new_poke)
+            if self.auto_random:
+                new_poke = self.brain.choose_on_switching_move()
+                await self.switch(new_poke)
 
         # Debug (sent "log" in chat)
         elif info_type == "c" and info_list[1] == "log":
@@ -142,6 +154,12 @@ class Client(showdown.Client):
         mega_str = " mega" if mega else ''
         z_str = " zmove" if z else ''
         await self.client.use_command(self.battle.id, 'choose', 'move {}{}{}'.format(move, mega_str, z_str), delay=0, lifespan=inf)
+    
+    def check_if_move_valid(self, id):
+        return self.brain.check_move_validity(id)
+
+    def check_if_switch_valid(self, id):
+        return self.brain.check_switch_validity(id)
     
     async def move_from_id(self, id):
         """Play a move by chosing it from its id"""

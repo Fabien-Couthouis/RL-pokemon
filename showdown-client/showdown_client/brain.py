@@ -92,6 +92,14 @@ class Brain():
             if pokemon is not None and pokemon.name == poke_name:
                 return pokemon
         return None
+    
+    def check_move_validity(self, id):
+        """Check if the chosen move is valid"""
+        return self.active_poke.moves[id]["disabled"] == False
+
+    def check_switch_validity(self, id): 
+        """Check if the chosen pokemon is valid to switch to"""
+        return (id != self.active_poke.team_id and self.player_pokemons[id] != None)
 
     def get_random_move(self, valid_moves):
         """Get a random move in valid_moves """
