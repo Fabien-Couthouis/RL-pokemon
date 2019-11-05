@@ -49,7 +49,7 @@ class Client(showdown.Client):
     
     def wait_for_next_turn(self):
         turn = self.brain.current_turn
-        while self.brain.current_turn != turn + 1:
+        while self.brain.current_turn == turn and self.status == IN_GAME:
             pass
 
     async def on_login(self, login_data):

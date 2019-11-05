@@ -131,7 +131,7 @@ class ShowdownMonitor(Wrapper):
 
     def close(self):
         """Flush all monitor data to disk and close any open rending windows."""
-        super(Monitor, self).close()
+        super(ShowdownMonitor, self).close()
 
         if not self.enabled:
             return

@@ -1,6 +1,6 @@
 import argparse
 import sys
-
+import asyncio
 import gym
 from gym import logger
 from showdown_monitor import ShowdownMonitor
@@ -35,11 +35,14 @@ if __name__ == '__main__':
     reward = 0
     done = False
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     for i in range(episode_count):
         ob = env.reset()
         while True:
             action = agent.act(ob, reward, done)
-            ob, reward, done, _ = env.step(action)
+            ob, reward, done, _ = loop.run_until_complete(env.step(action))
             if done:
                 break
             # Note there's no env.render() here. But the environment still can open window and
