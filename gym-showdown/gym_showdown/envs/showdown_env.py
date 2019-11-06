@@ -2,6 +2,7 @@ import gym
 import logging
 import webbrowser
 import threading
+import time
 from gym import error, spaces, utils
 from gym.utils import seeding
 
@@ -48,13 +49,14 @@ class ShowdownEnv(gym.Env):
         return ob, reward, episode_over, {}
 
     async def _take_action(self, action):
+        print(f'Taking action {action}')
         if action < 4:  # Agent chose to use a move from current poke
             if self.client_thread.client.check_if_move_valid(action):
                 await self.client_thread.client.move_from_id(action)
             else:
                 self.action_invalid = True
         elif action < 10:  # Agent chose to switch to another pokemon
-            if self.client_thread.client.check_if_switch_valid(action):
+            if self.client_thread.client.check_if_switch_valid(action-4):
                 await self.client_thread.client.switch_from_id(action-4)
             else:
                 self.action_invalid = True

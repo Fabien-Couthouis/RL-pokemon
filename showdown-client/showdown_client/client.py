@@ -2,6 +2,7 @@
 import showdown
 import asyncio
 import json
+import time
 from math import inf
 from pprint import pprint  # debug
 from .brain import Brain, Pokemon
@@ -13,7 +14,6 @@ IN_GAME = 0
 LOSS = 1
 WIN = 2
 IDLE = 3
-
 
 class Client(showdown.Client):
 
@@ -33,13 +33,17 @@ class Client(showdown.Client):
         self.opponent_fainted_last_turn = False
         self.status = IDLE
         self.auto_random = auto_random
+        self.must_take_additional_action = False
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
-        if self.battle.p1 == self.name:
+        print("battle p1", self.battle)
+        print("player name", self.name)
+        if str(self.battle).beginswith(self.name):
             self.player = "p1"
         else:
             self.player = "p2"
+        print("player", self.player)
 
     def is_player(self, player_info):
         return player_info.startswith(self.player)
@@ -49,8 +53,8 @@ class Client(showdown.Client):
     
     def wait_for_next_turn(self):
         turn = self.brain.current_turn
-        while self.brain.current_turn == turn and self.status == IN_GAME:
-            pass
+        while self.brain.current_turn == turn and self.status == IN_GAME and self.must_take_additional_action == False:
+            time.sleep(0.2)
 
     async def on_login(self, login_data):
         """ Called when logged on showdown """
@@ -86,7 +90,8 @@ class Client(showdown.Client):
 
         # Teampreview
         elif info_type == "teampreview":
-            first_pokemon = self.brain.choose_teampreview()
+            #first_pokemon = self.brain.choose_teampreview()
+            first_pokemon = self.brain.player_pokemons[3]
             await self.lead_with(first_pokemon)
 
         # Got opponent pokemons info
@@ -98,10 +103,14 @@ class Client(showdown.Client):
             self.brain.update_opponent_conditions(info_list)
 
         elif info_type == "move" and not self.is_player(info_list[0]):
+            print("info_list[0]", info_list[0])
+            print("player", self.player)
+            print("IsPlayer", self.is_player(info_list[0]))
             self.brain.update_opponent_moves(info_list)
 
         # Play turn
         elif info_type == "turn":
+            self.brain.current_turn += 1
             if self.brain.current_turn <= 1:
                 self.status = IN_GAME
             if self.auto_random:
@@ -114,15 +123,21 @@ class Client(showdown.Client):
                     await self.move(move, mega, z)
 
         # Switch on player poke faint
-        elif info_type == "faint" and self.is_player(info_list[0]):
+        elif info_type == "faint": #and self.is_player(info_list[0]):
+            print(info_list)
             print("FAINT")
             if self.auto_random:
                 new_poke = self.brain.choose_on_faint()
                 await self.switch(new_poke)
+            self.must_take_additional_action = True
 
         # Switching move choosen by player (U-turn, ...)
         elif info_type == "move" and self.is_player(info_list[0]) and info_list[1] in SWITCHING_MOVES:
             print("Switching move")
+            print("info_list[0]", info_list[0])
+            print("player", self.player)
+            print("IsPlayer", self.is_player(info_list[0]))
+            self.must_take_additional_action = True
             if self.auto_random:
                 new_poke = self.brain.choose_on_switching_move()
                 await self.switch(new_poke)
@@ -143,6 +158,7 @@ class Client(showdown.Client):
             else:
                 self.status == LOSS
                 a = "loss"
+            print(self.status)
             self.brain.set_game_result(a)
 
     async def lead_with(self, pokemon):
@@ -153,22 +169,29 @@ class Client(showdown.Client):
         """Play a move"""
         mega_str = " mega" if mega else ''
         z_str = " zmove" if z else ''
+        print(f"Chosen move: {move}")
         await self.client.use_command(self.battle.id, 'choose', 'move {}{}{}'.format(move, mega_str, z_str), delay=0, lifespan=inf)
     
     def check_if_move_valid(self, id):
+        if self.must_take_additional_action:
+            return False
         return self.brain.check_move_validity(id)
 
     def check_if_switch_valid(self, id):
-        return self.brain.check_switch_validity(id)
+        return self.brain.check_switch_validity(id+1)
     
     async def move_from_id(self, id):
         """Play a move by chosing it from its id"""
         move, mega, z = self.brain.choose_move(random=False, id=id)
+        move = 'uturn'
+        mega = False
+        z = False
         await self.move(move, mega, z)
     
     async def switch_from_id(self, id):
         """Switch to another pokemon according to its id"""
-        pokemon = self.brain.get_poke_from_id(id)
+        self.must_take_additional_action = False
+        pokemon = self.brain.get_poke_from_id(id+1)
         await self.switch(pokemon)
 
     async def switch(self, pokemon):

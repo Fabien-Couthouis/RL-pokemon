@@ -99,7 +99,9 @@ class Brain():
 
     def check_switch_validity(self, id): 
         """Check if the chosen pokemon is valid to switch to"""
-        return (id != self.active_poke.team_id and self.player_pokemons[id] != None)
+        if id < len(self.player_pokemons):
+            return (id!= self.active_poke.team_id and self.player_pokemons[id] != None)
+        return False
 
     def get_random_move(self, valid_moves):
         """Get a random move in valid_moves """
@@ -162,15 +164,15 @@ class Brain():
         print(move)
         # if len(pokemon.moves) == 0:
         #     pokemon.moves = []
-        if not move in pokemon.moves:
-            print(pokemon.moves, "NOT")
-            pokemon.moves.append(move)
-            print("move appened")
+        if pokemon is not None:
+            if not move in pokemon.moves:
+                print(pokemon.moves, "NOT")
+                pokemon.moves.append(move)
+                print("move appened")
 
     def choose_move(self, random=True, id=0):
         """Select a valid move for the active pokemon this turn"""
         # Notes : pokemon will always mega if possible. Random or from id
-        self.current_turn += 1
         # Select a non disabled move
         print("CHOOSE MOVE IN", self.active_poke.moves)
         if "disabled" in self.active_poke.moves[0]:
@@ -184,7 +186,7 @@ class Brain():
         if random:
             move = self.get_random_move(valid_moves)
         else:
-            move = self.active_poke.moves[id]
+            move = self.active_poke.moves[id]['id']
         # Mega only if not already mega
         mega = self.active_poke.can_mega
         z = False
