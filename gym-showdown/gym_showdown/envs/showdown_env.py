@@ -21,7 +21,7 @@ class ClientThread(threading.Thread):
                     open('data/team.txt', 'rt') as team:
                 team = team.read()
                 username, password = f.read().strip().splitlines()
-        self.client = Client(name=username, password=password, team=team, search_battle_on_login=True, auto_random=False)
+        self.client = Client(name=username, password=password, team=team, search_battle_on_login=False, auto_random=False)
     
     def run(self):
         self.client.start()
@@ -72,12 +72,17 @@ class ShowdownEnv(gym.Env):
         else:
             return 0
 
-    def reset(self):
+    async def reset(self):
         if self.client_thread.client.status == IN_GAME:
             self.client_thread.client.forfeit(self.client_thread.client.battle)
-        self.client_thread.client.search_battles(self.client_thread.client.team, 'ou')
+        time.sleep(1)
+        self.client_thread.client.reset()
+        await self.client_thread.client.search_battles(self.client_thread.client.team, 'ou')
         while self.client_thread.client.status != IN_GAME:
-            pass
+            print("status loop:", self.client_thread.client.status)
+            if self.client_thread.client.status == WIN:
+                break
+            time.sleep(0.2)
         return self.client_thread.client.get_env_state()
 
     def render(self, mode='human'):
@@ -87,4 +92,4 @@ class ShowdownEnv(gym.Env):
     def close(self):
         if self.client_thread.client.status == IN_GAME:
             self.client_thread.client.forfeit(self.client_thread.client.battle)
-        self.client_thread._stop()
+        #self.client_thread._stop()

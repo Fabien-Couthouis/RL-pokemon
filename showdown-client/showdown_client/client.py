@@ -15,6 +15,7 @@ LOSS = 1
 WIN = 2
 IDLE = 3
 
+
 class Client(showdown.Client):
 
     def __init__(self, name, password, team, movedex_string=None, search_battle_on_login=False, auto_random=False):
@@ -37,20 +38,17 @@ class Client(showdown.Client):
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
-        print("battle p1", self.battle)
-        print("player name", self.name)
         if str(self.battle).beginswith(self.name):
             self.player = "p1"
         else:
             self.player = "p2"
-        print("player", self.player)
 
     def is_player(self, player_info):
         return player_info.startswith(self.player)
-    
+
     def get_env_state(self):
         return [self.brain.current_turn, self.brain.active_poke, self.brain.player_pokemons, self.brain.opponent_pokemons]
-    
+
     def wait_for_next_turn(self):
         turn = self.brain.current_turn
         while self.brain.current_turn == turn and self.status == IN_GAME and self.must_take_additional_action == False:
@@ -90,8 +88,7 @@ class Client(showdown.Client):
 
         # Teampreview
         elif info_type == "teampreview":
-            #first_pokemon = self.brain.choose_teampreview()
-            first_pokemon = self.brain.player_pokemons[3]
+            first_pokemon = self.brain.choose_teampreview()
             await self.lead_with(first_pokemon)
 
         # Got opponent pokemons info
@@ -123,7 +120,7 @@ class Client(showdown.Client):
                     await self.move(move, mega, z)
 
         # Switch on player poke faint
-        elif info_type == "faint": #and self.is_player(info_list[0]):
+        elif info_type == "faint":  # and self.is_player(info_list[0]):
             print(info_list)
             print("FAINT")
             if self.auto_random:
@@ -153,12 +150,13 @@ class Client(showdown.Client):
         elif info_type == 'win':
             a = ""
             if info_list[0] == self.name:
-                self.status == WIN
+                self.status = WIN
                 a = "win"
             else:
-                self.status == LOSS
+                self.status = LOSS
                 a = "loss"
-            print(self.status)
+            print("a:", a)
+            print("status:", self.status)
             self.brain.set_game_result(a)
 
     async def lead_with(self, pokemon):
@@ -171,7 +169,7 @@ class Client(showdown.Client):
         z_str = " zmove" if z else ''
         print(f"Chosen move: {move}")
         await self.client.use_command(self.battle.id, 'choose', 'move {}{}{}'.format(move, mega_str, z_str), delay=0, lifespan=inf)
-    
+
     def check_if_move_valid(self, id):
         if self.must_take_additional_action:
             return False
@@ -179,15 +177,12 @@ class Client(showdown.Client):
 
     def check_if_switch_valid(self, id):
         return self.brain.check_switch_validity(id+1)
-    
+
     async def move_from_id(self, id):
         """Play a move by chosing it from its id"""
         move, mega, z = self.brain.choose_move(random=False, id=id)
-        move = 'uturn'
-        mega = False
-        z = False
         await self.move(move, mega, z)
-    
+
     async def switch_from_id(self, id):
         """Switch to another pokemon according to its id"""
         self.must_take_additional_action = False
@@ -197,3 +192,7 @@ class Client(showdown.Client):
     async def switch(self, pokemon):
         """Switch to another pokemon"""
         await self.client.use_command(self.battle.id, 'choose', 'switch {}'.format(pokemon.team_id), delay=0, lifespan=inf)
+
+    def reset(self):
+        self.status = IDLE
+        self.brain.reset()

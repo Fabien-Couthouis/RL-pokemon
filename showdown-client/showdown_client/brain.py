@@ -229,3 +229,11 @@ class Brain():
     def choose_on_switching_move(self):
         """Select action on player switching move"""
         return self.choose_on_switch()
+
+    def reset(self):
+        self.current_turn = 0
+        self.opponent_pokemons = [None]
+        self.player_pokemons = [None]
+        self.battle = None
+        self.active_poke = None
+        self._game_result = None

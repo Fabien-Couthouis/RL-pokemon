@@ -31,7 +31,7 @@ if __name__ == '__main__':
     #env.seed(0)
     agent = RandomAgent(env.action_space)
 
-    episode_count = 1
+    episode_count = 2
     reward = 0
     done = False
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     asyncio.set_event_loop(loop)
 
     for i in range(episode_count):
-        ob = env.reset()
+        ob = loop.run_until_complete(env.reset())
         while True:
             action = agent.act(ob, reward, done)
             ob, reward, done, _ = loop.run_until_complete(env.step(action))
