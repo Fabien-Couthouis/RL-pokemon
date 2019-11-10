@@ -5,7 +5,7 @@ import json
 import time
 from math import inf
 from pprint import pprint  # debug
-from .brain import Brain, Pokemon
+from brain import Brain, Pokemon
 
 
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
@@ -38,7 +38,7 @@ class Client(showdown.Client):
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
-        if str(self.battle).beginswith(self.name):
+        if self.battle.title.startswith(self.player):
             self.player = "p1"
         else:
             self.player = "p2"
