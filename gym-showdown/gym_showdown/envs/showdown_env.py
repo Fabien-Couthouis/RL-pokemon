@@ -23,9 +23,9 @@ class ClientThread(threading.Thread):
         with open('data/login.txt', 'rt') as f,\
                 open('data/team.txt', 'rt') as team:
             team = team.read()
-            username, password = f.read().strip().splitlines()
+            username, password, server_host = f.read().strip().splitlines()
 
-        self.client = Client(name=username, password=password,
+        self.client = Client(name=username, password=password, server_host=server_host,
                              team=team, search_battle_on_login=False, auto_random=False)
 
     def run(self):

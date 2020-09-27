@@ -5,7 +5,7 @@ import json
 import time
 from math import inf
 from pprint import pprint  # debug
-from brain import Brain, Pokemon
+from .brain import Brain, Pokemon
 
 
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
@@ -18,8 +18,8 @@ IDLE = 3
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password, team, movedex_string=None, search_battle_on_login=False, auto_random=False):
-        super().__init__(name, password)
+    def __init__(self, name, password, team, movedex_string=None, server_host=None, search_battle_on_login=False, auto_random=False):
+        super().__init__(name, password, server_host=server_host)
         if movedex_string == None:
             try:
                 with open('data/moves.json') as movedex_file:
@@ -57,7 +57,7 @@ class Client(showdown.Client):
     async def on_login(self, login_data):
         """ Called when logged on showdown """
         if self.search_battle_on_login:
-            await self.search_battles(self.team, 'gen7ou')
+            await self.search_battles(self.team, 'ou')
 
     async def on_challenge_update(self, challenge_data):
         """ Called when challenged on showdown """
