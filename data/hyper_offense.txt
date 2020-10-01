@@ -1,0 +1,60 @@
+rillaboom @ life orb
+Ability: grassy surge
+EVs: 0 HP / 252 Atk / 0 Def / 0 SpA / 4 SpD / 252 Spe
+adamant Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  grassy glide
+-  u-turn
+-  knock off
+-  swords dance
+
+volcarona @ heavy-duty boots
+Ability: flame body
+EVs: 0 HP / 0 Atk / 0 Def / 252 SpA / 4 SpD / 252 Spe
+modest Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  quiver dance
+-  psychic
+-  giga drain
+-  flamethrower
+
+urshifu @ choice band
+Ability: unseen fist
+EVs: 0 HP / 252 Atk / 0 Def / 0 SpA / 4 SpD / 252 Spe
+jolly Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  wicked blow
+-  close combat
+-  u-turn
+-  poison jab
+
+jirachi @ choice scarf
+Ability: serene grace
+EVs: 0 HP / 252 Atk / 0 Def / 0 SpA / 4 SpD / 252 Spe
+jolly Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  iron head
+-  u-turn
+-  wish
+-  stealth rock
+
+Crawdaunt @ life orb
+Ability: adaptability
+EVs: 0 HP / 252 Atk / 4 Def / 0 SpA / 0 SpD / 252 Spe
+adamant Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  swords dance
+-  aqua jet
+-  knock off
+-  crabhammer
+
+Rhyperior @ leftovers
+Ability: solid rock
+EVs: 244 HP / 16 Atk / 0 Def / 0 SpA / 188 SpD / 60 Spe
+adamant Nature
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+-  earthquake
+-  swords dance
+-  heat crash
+-  rock blast
+

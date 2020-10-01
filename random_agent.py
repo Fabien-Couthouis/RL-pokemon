@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make('gym_showdown:showdown-v0')
+    env = gym.make('gym_showdown:showdown-v0', login_path='data/login.txt', team_path='data/hyper_offense.txt')
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files

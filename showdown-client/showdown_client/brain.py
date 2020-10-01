@@ -100,7 +100,14 @@ class Brain():
     def check_switch_validity(self, id): 
         """Check if the chosen pokemon is valid to switch to"""
         if id < len(self.player_pokemons):
-            return (id!= self.active_poke.team_id and self.player_pokemons[id] != None)
+            return (id != self.active_poke.team_id and self.player_pokemons[id] != None)
+        return False
+    
+    def is_switch_needed(self):
+        """Check if a switch is necessary after using a switching move"""
+        for p in self.player_pokemons:
+            if p != None and p.team_id != self.active_poke.team_id:
+                return True
         return False
 
     def get_random_move(self, valid_moves):

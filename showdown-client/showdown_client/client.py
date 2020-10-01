@@ -18,7 +18,7 @@ IDLE = 3
 
 class Client(showdown.Client):
 
-    def __init__(self, name, password, team, movedex_string=None, server_host=None, search_battle_on_login=False, auto_random=False):
+    def __init__(self, name, password, team, tier='gen8ou', movedex_string=None, server_host=None, search_battle_on_login=False, auto_random=False):
         super().__init__(name, password, server_host=server_host)
         if movedex_string == None:
             try:
@@ -28,8 +28,10 @@ class Client(showdown.Client):
                 print("Could not find movedex file")
         self.brain = Brain(
             player_name=name, movedex=json.loads(movedex_string))
-        self.player = ""
+        self.name = name
+        self.player = None
         self.team = team
+        self.tier = tier
         self.search_battle_on_login = search_battle_on_login
         self.opponent_fainted_last_turn = False
         self.status = IDLE
@@ -38,7 +40,7 @@ class Client(showdown.Client):
 
     def set_player(self):
         """ Set player var to "p1" or "p2" """
-        if self.battle.title.startswith(self.player):
+        if self.battle.title.startswith(self.name):
             self.player = "p1"
         else:
             self.player = "p2"
@@ -57,13 +59,13 @@ class Client(showdown.Client):
     async def on_login(self, login_data):
         """ Called when logged on showdown """
         if self.search_battle_on_login:
-            await self.search_battles(self.team, 'ou')
+            await self.search_battles(self.team, self.tier)
 
     async def on_challenge_update(self, challenge_data):
         """ Called when challenged on showdown """
         incoming = challenge_data.get('challengesFrom', {})
         for user, tier in incoming.items():
-            if 'ou' in tier:
+            if self.tier in tier:
                 await self.accept_challenge(user, self.team)
 
     async def on_room_init(self, battle):
@@ -129,7 +131,7 @@ class Client(showdown.Client):
             self.must_take_additional_action = True
 
         # Switching move choosen by player (U-turn, ...)
-        elif info_type == "move" and self.is_player(info_list[0]) and info_list[1] in SWITCHING_MOVES:
+        elif info_type == "move" and self.is_player(info_list[0]) and info_list[1] in SWITCHING_MOVES and self.brain.is_switch_needed():
             print("Switching move")
             print("info_list[0]", info_list[0])
             print("player", self.player)

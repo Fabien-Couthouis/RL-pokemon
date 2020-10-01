@@ -1,3 +1,4 @@
+from logging import log
 import gym
 import logging
 import webbrowser
@@ -18,10 +19,10 @@ ACTION_SWITCH = range(4, 10)
 
 class ClientThread(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, login_path, team_path):
         super().__init__()
-        with open('data/login.txt', 'rt') as f,\
-                open('data/team.txt', 'rt') as team:
+        with open(login_path, 'rt') as f,\
+                open(team_path, 'rt') as team:
             team = team.read()
             username, password, server_host = f.read().strip().splitlines()
 
@@ -36,8 +37,8 @@ class ShowdownEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     logging.basicConfig(level=logging.ERROR)
 
-    def __init__(self):
-        self.client_thread = ClientThread()
+    def __init__(self, login_path='data/login.txt', team_path='data/team.txt'):
+        self.client_thread = ClientThread(login_path, team_path)
         self.action_space = spaces.Discrete(10)
         self.viewer = False
         self.action_invalid = False
