@@ -37,11 +37,12 @@ class ShowdownEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     logging.basicConfig(level=logging.ERROR)
 
-    def __init__(self, login_path='data/login.txt', team_path='data/team.txt'):
+    def __init__(self, login_path='data/login.txt', team_path='data/team.txt', tier='ou'):
         self.client_thread = ClientThread(login_path, team_path)
         self.action_space = spaces.Discrete(10)
         self.viewer = False
         self.action_invalid = False
+        self.tier = tier
         self._start_server()
 
     def _start_server(self):
@@ -92,7 +93,7 @@ class ShowdownEnv(gym.Env):
 
         time.sleep(1)
         self.client_thread.client.reset()
-        await self.client_thread.client.search_battles(self.client_thread.client.team, 'ou')
+        await self.client_thread.client.search_battles(self.client_thread.client.team, self.tier)
 
         while self.client_thread.client.status != IN_GAME:
             print("status loop:", self.client_thread.client.status)

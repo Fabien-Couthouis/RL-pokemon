@@ -1,7 +1,9 @@
-import asyncio
+import os.path
 import gym
 from gym import logger
 from showdown_monitor import ShowdownMonitor
+from ray import tune
+from ray.rllib.contrib.alpha_zero.core.alpha_zero_trainer import AlphaZeroTrainer
 
 class AlphaZeroAgent(object):
     """An agent inspired by AlphaZero from DeepMind"""
@@ -18,34 +20,83 @@ if __name__ == '__main__':
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make('gym_showdown:showdown-v0')
+    env = gym.make('gym_showdown:showdown-v0', login_path=os.path.abspath('data/login.txt'), team_path=os.path.abspath('data/hyper_offense.txt'))
+
+    
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
-    outdir = '/tmp/random-agent-results'
+    outdir = '/tmp/alphazero-agent-results'
     env = ShowdownMonitor(env, directory=outdir, force=True)
-    #env.seed(0)
-    agent = AlphaZeroAgent(env.action_space)
+    
+    config = {
+    "env": env,
+    # Size of batches collected from each worker
+    "rollout_fragment_length": 200,
+    # Number of timesteps collected for each SGD round
+    "train_batch_size": 4000,
+    # Total SGD batch size across all devices for SGD
+    "sgd_minibatch_size": 128,
+    # Whether to shuffle sequences in the batch when training (recommended)
+    "shuffle_sequences": True,
+    # Number of SGD iterations in each outer loop
+    "num_sgd_iter": 30,
+    # IN case a buffer optimizer is used
+    "learning_starts": 1000,
+    # Size of the replay buffer in batches (not timesteps!).
+    "buffer_size": 1000,
+    # Stepsize of SGD
+    "lr": 5e-5,
+    # Learning rate schedule
+    "lr_schedule": None,
+    # Share layers for value function. If you set this to True, it"s important
+    # to tune vf_loss_coeff.
+    "vf_share_layers": False,
+    # Whether to rollout "complete_episodes" or "truncate_episodes"
+    "batch_mode": "complete_episodes",
+    # Which observation filter to apply to the observation
+    "observation_filter": "NoFilter",
+    # Uses the sync samples optimizer instead of the multi-gpu one. This does
+    # not support minibatches.
+    "simple_optimizer": True,
 
-    episode_count = 2
-    reward = 0
-    done = False
+    # === MCTS ===
+    "mcts_config": {
+        "puct_coefficient": 1.0,
+        "num_simulations": 30,
+        "temperature": 1.5,
+        "dirichlet_epsilon": 0.25,
+        "dirichlet_noise": 0.03,
+        "argmax_tree_policy": False,
+        "add_dirichlet_noise": True,
+    },
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # === Ranked Rewards ===
+    # implement the ranked reward (r2) algorithm
+    # from: https://arxiv.org/pdf/1807.01672.pdf
+    "ranked_rewards": {
+        "enable": True,
+        "percentile": 75,
+        "buffer_max_length": 1000,
+        # add rewards obtained from random policy to
+        # "warm start" the buffer
+        "initialize_buffer": True,
+        "num_init_rewards": 100,
+    },
 
-    for i in range(episode_count):
-        ob = loop.run_until_complete(env.reset())
-        while True:
-            action = agent.act(ob, reward, done)
-            ob, reward, done, _ = loop.run_until_complete(env.step(action))
-            if done:
-                break
-            # Note there's no env.render() here. But the environment still can open window and
-            # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
-            # Video is not recorded every episode, see capped_cubic_video_schedule for details.
+    # === Evaluation ===
+    # Extra configuration that disables exploration.
+    "evaluation_config": {
+        "mcts_config": {
+            "argmax_tree_policy": True,
+            "add_dirichlet_noise": False,
+        },
+    }
+    }
+
+    tune.run(AlphaZeroTrainer, config=config)
 
     # Close the env and write monitor result info to disk
-    env.close()
+    #env.close()
