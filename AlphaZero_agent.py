@@ -1,9 +1,15 @@
+import time
+from os import mkdir
 import os.path
 import gym
 from gym import logger
 from showdown_monitor import ShowdownMonitor
+import ray
 from ray import tune
 from ray.rllib.contrib.alpha_zero.core.alpha_zero_trainer import AlphaZeroTrainer
+from ray.rllib.agents.ppo import PPOTrainer
+from ray.tune.registry import register_env
+from gym_showdown.envs import ShowdownEnv
 
 class AlphaZeroAgent(object):
     """An agent inspired by AlphaZero from DeepMind"""
@@ -15,12 +21,20 @@ class AlphaZeroAgent(object):
         return self.action_space.sample()
 
 
+def showdown_env_creator(env_config):
+    return ShowdownEnv(login_path=env_config['login_path'], team_path=env_config['team_path'], tier=env_config['tier'])
+
+
 if __name__ == '__main__':
     # You can set the level to logger.DEBUG or logger.WARN if you
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make('gym_showdown:showdown-v0', login_path=os.path.abspath('data/login.txt'), team_path=os.path.abspath('data/hyper_offense.txt'))
+    ray.init(ignore_reinit_error=True)
+
+    register_env('showdownEnv', showdown_env_creator)
+
+    #env = gym.make('gym_showdown:showdown-v0', login_path=os.path.abspath('data/login.txt'), team_path=os.path.abspath('data/hyper_offense.txt'))
 
     
 
@@ -29,10 +43,11 @@ if __name__ == '__main__':
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
     outdir = '/tmp/alphazero-agent-results'
-    env = ShowdownMonitor(env, directory=outdir, force=True)
+    #env = ShowdownMonitor(env, directory=outdir, force=True)
+
     
     config = {
-    "env": env,
+    "env": None,
     # Size of batches collected from each worker
     "rollout_fragment_length": 200,
     # Number of timesteps collected for each SGD round
@@ -96,7 +111,21 @@ if __name__ == '__main__':
     }
     }
 
-    tune.run(AlphaZeroTrainer, config=config)
+    agent = PPOTrainer(env='showdownEnv', config={
+        "env_config": {
+            'login_path': 'data/login.txt',
+            'team_path': 'data/hyper_offense.txt',
+            'tier': 'ou',
+        }
+    })
+    
+    n_iters = 200
+    exp_dir = f'./logs/exp-{time.strftime("%Y%m%d-%H%M%S")}'
+    mkdir(exp_dir)
+
+    for i in range(n_iters):
+        results = agent.train()
+        chkpt_file = agent.save(exp_dir)
 
     # Close the env and write monitor result info to disk
     #env.close()
