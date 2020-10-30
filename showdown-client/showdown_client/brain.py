@@ -1,14 +1,25 @@
 # -*- coding: utf-8 -*-
+from os import set_inheritable
 import random
+import numpy as np
+
+TYPES = ["fire", "grass", "water", "ice", "psy", "fairy", "steel", "electric", "dark", "ground", "rock", "normal", "ghost", "bug", "flying", "dragon", "fight", "poison"]
+STATUS = ["normal", "paralyzed", "burned", "poisonned", "badly poisonned", "asleep", "frozen"]
+ITEMS = []
 
 class Pokemon():
     def __init__(self, team_id, name, condition=None, ability=None, moves=None, item=None):
         self.team_id = team_id
         self.name = name
         self.condition = condition
+        self.type = None
+        self.pv = None
+        self.pv_max = None
         self.ability = ability
         self.item = item
         self.status = None
+        self.confused = False
+        self.flinched = False
         self.can_mega = False
         self.Z_type = None
 
@@ -41,6 +52,19 @@ class Pokemon():
             return "psychic"
         else:
             return self.item.replace('iumz', '').replace('in', '')
+    
+    def serialize(self):
+        """
+        Serialize the pokemon by converting its main infos into a dict of numbers
+        """
+        pok_serial = {
+            'status': np.array([TYPES.index(self.type), self.pv, self.pv_max, STATUS.index(self.status.lower()), int(self.confused), int(self.flinched), ITEMS.index(self.item.lower())], dtype=int),
+            'moves': {
+                f'move_{j}': np.array([TYPES.index(m["type"].lower()), int(m["power"]), int(m["precision"])])
+                for j,m in enumerate(self.moves)
+            }
+        }
+        return pok_serial
 
     def __str__(self):
         return "Pokemon {name} with teamid {teamid}".format(name=self.name, teamid=self.team_id)

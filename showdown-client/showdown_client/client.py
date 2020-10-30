@@ -10,6 +10,7 @@ from .brain import Brain, Pokemon
 
 SWITCHING_MOVES = ["U-turn", "Volt Switch"]
 
+
 IN_GAME = 0
 LOSS = 1
 WIN = 2
@@ -47,6 +48,11 @@ class Client(showdown.Client):
 
     def is_player(self, player_info):
         return player_info.startswith(self.player)
+    
+    def serialize_pokemon(poke):
+        serial = []
+        serial[0] = poke.
+
 
     def get_env_state(self):
         return [self.brain.current_turn, self.brain.active_poke, self.brain.player_pokemons, self.brain.opponent_pokemons]

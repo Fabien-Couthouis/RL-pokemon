@@ -1,4 +1,5 @@
 from logging import log
+import numpy as np
 import gym
 import logging
 import webbrowser
@@ -40,6 +41,28 @@ class ShowdownEnv(gym.Env):
     def __init__(self, login_path='data/login.txt', team_path='data/team.txt', tier='ou'):
         self.client_thread = ClientThread(login_path, team_path)
         self.action_space = spaces.Discrete(10)
+        self.observation_space = spaces.Dict({
+            'current_turn': spaces.Box(0, 999, shape=()), 
+            'active_pokemons': spaces.Box(0, 5, shape=(2,)), 
+            'player_pokemons': spaces.Dict({
+                f'pokemon_{i}': spaces.Dict({
+                    'status': spaces.Box(low=[0, 0, 1, 0, 0, 0, 0], high=[18, 999, 999, 6, 1, 1, 29]),
+                    'moves': spaces.Dict({
+                        f'move_{j}': spaces.Box(low=[-1, -1, 1], high=[18, 250, 100])
+                        for j in range(4)
+                    })
+                }) for i in range(6)
+            }),
+            'opponent_pokemons': spaces.Dict({
+                f'pokemon_{i}': spaces.Dict({
+                'status': spaces.Box(low=[0, 0, 1, 0, 0, 0, 0], high=[18, 999, 999, 6, 1, 1, 29]),
+                'moves': spaces.Dict({
+                        f'move_{j}': spaces.Box(low=[-1, -1, 1], high=[18, 250, 100])
+                        for j in range(4)
+                    })
+                }) for i in range(6)
+            })
+        })
         self.viewer = False
         self.action_invalid = False
         self.tier = tier
