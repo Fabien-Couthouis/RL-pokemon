@@ -1,17 +1,22 @@
-import argparse
-import sys
+from __future__ import absolute_import
+
 import asyncio
+
 import gym
+import numpy as np
 from gym import logger
 from showdown_monitor import ShowdownMonitor
 
-class RandomAgent(object):
-    """The world's simplest agent!"""
+from .base_agent import BaseTrainer
+
+
+class RandomTrainer(BaseTrainer):
+    """Random play"""
 
     def __init__(self, action_space):
-        self.action_space = action_space
+        super.__init__(action_space)
 
-    def act(self, observation, reward, done):
+    def act(self, observation: np.ndarray, reward: float, done: bool):
         return self.action_space.sample()
 
 
@@ -20,7 +25,8 @@ if __name__ == '__main__':
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make('gym_showdown:showdown-v0', login_path='data/login.txt', team_path='data/hyper_offense.txt')
+    env = gym.make('gym_showdown:showdown-v0',
+                   login_path='data/login.txt', team_path='data/hyper_offense.txt')
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files
@@ -28,8 +34,8 @@ if __name__ == '__main__':
     # like: tempfile.mkdtemp().
     outdir = '/tmp/random-agent-results'
     env = ShowdownMonitor(env, directory=outdir, force=True)
-    #env.seed(0)
-    agent = RandomAgent(env.action_space)
+    # env.seed(0)
+    agent = RandomTrainer(env.action_space)
 
     episode_count = 2
     reward = 0
