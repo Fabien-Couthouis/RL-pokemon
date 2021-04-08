@@ -1,28 +1,16 @@
 import time
 from os import mkdir
-import os.path
-import gym
 from gym import logger
-from showdown_monitor import ShowdownMonitor
 import ray
-from ray import tune
 from ray.rllib.agents.ppo import PPOTrainer
 from ray.tune.registry import register_env
-from gym_showdown.envs import ShowdownEnv
+from poke_env.player_configuration import PlayerConfiguration
+from poke_env.player.random_player import RandomPlayer
+from rllib_env_wrapper import RLLIBGen8SinglePlayer, rllib_env_creator, rllib_evaluation, rllib_training
 
+# def showdown_env_creator(env_config):
+#     return ShowdownEnv(login_path=env_config['login_path'], team_path=env_config['team_path'], tier=env_config['tier'])
 
-class PPOTrainer(object):
-    """A PPO trainer"""
-
-    def __init__(self, action_space):
-        self.action_space = action_space
-
-    def act(self, observation, reward, done):
-        return self.action_space.sample()
-
-
-def showdown_env_creator(env_config):
-    return ShowdownEnv(login_path=env_config['login_path'], team_path=env_config['team_path'], tier=env_config['tier'])
 
 
 if __name__ == '__main__':
@@ -32,19 +20,21 @@ if __name__ == '__main__':
 
     ray.init(ignore_reinit_error=True)
 
-    register_env('showdownEnv', showdown_env_creator)
+    player_config = PlayerConfiguration("RL_bot", None)
 
-    #env = gym.make('gym_showdown:showdown-v0', login_path=os.path.abspath('data/login.txt'), team_path=os.path.abspath('data/hyper_offense.txt'))
+    env_player = RLLIBGen8SinglePlayer(player_configuration=player_config, battle_format="gen8randombattle")
+    random_player = RandomPlayer(battle_format="gen8randombattle")
+
+    register_env("pokeEnv", rllib_env_creator)
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
-    outdir = '/tmp/alphazero-agent-results'
+    outdir = '/tmp/ppo-agent-results'
     #env = ShowdownMonitor(env, directory=outdir, force=True)
 
     config = {
-        "env": None,
         # Size of batches collected from each worker
         "rollout_fragment_length": 200,
         # Number of timesteps collected for each SGD round
@@ -108,21 +98,31 @@ if __name__ == '__main__':
         }
     }
 
-    agent = PPOTrainer(env='showdownEnv', config={
+    agent = PPOTrainer(env='pokeEnv', config={
         "env_config": {
-            'login_path': 'data/login.txt',
-            'team_path': 'data/hyper_offense.txt',
-            'tier': 'ou',
+            'instance': env_player
         }
     })
 
-    n_iters = 200
+    n_iters = 20000
     exp_dir = f'./logs/exp-{time.strftime("%Y%m%d-%H%M%S")}'
     mkdir(exp_dir)
 
-    for i in range(n_iters):
-        results = agent.train()
-        chkpt_file = agent.save(exp_dir)
+    #Training
+    env_player.play_against(
+        env_algorithm=rllib_training, 
+        opponent=random_player,
+        env_algorithm_kwargs={"trainer": agent, "n_iters": n_iters, "save_freq": 1000, "save_dir": exp_dir})
+    
+    print("Finished training")
+    print("Starting evaluation...")
+
+    #Evaluation
+    env_player.play_against(
+        env_algorithm=rllib_evaluation,
+        opponent=random_player,
+        env_algorithm_kwargs={"trainer": agent, "nb_episodes": 10}
+    )
 
     # Close the env and write monitor result info to disk
     # env.close()
