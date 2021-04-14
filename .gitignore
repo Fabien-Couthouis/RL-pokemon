@@ -1,8 +1,8 @@
 #Vscode folder
 .vscode/
 
-#Sandbox file
-sandbox.py
+# results folder
+results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -88,11 +88,8 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
 .venv
-env/
 venv/
-ENV/
 env.bak/
 venv.bak/
 

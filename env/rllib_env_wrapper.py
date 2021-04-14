@@ -1,7 +1,21 @@
-from poke_env.player.env_player import Gen8EnvSinglePlayer
 import numpy as np
+from gym import spaces
+from poke_env.player.env_player import Gen8EnvSinglePlayer
 
-class RLLIBGen8SinglePlayer(Gen8EnvSinglePlayer):
+
+class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
+    def __init__(self, *args, **kwargs):
+        Gen8EnvSinglePlayer.__init__(self)
+        self._action_space = spaces.Discrete(22)
+        self._observation_space = spaces.Box(low=-10, high=10, shape=(10,))
+
+    @property
+    def action_space(self):
+        return self._action_space
+
+    @property
+    def observation_space(self):
+        return self._observation_space
 
     def embed_battle(self, battle):
         # -1 indicates that the move does not have a base power
@@ -36,34 +50,10 @@ class RLLIBGen8SinglePlayer(Gen8EnvSinglePlayer):
         )
 
     def compute_reward(self, battle) -> float:
-       return self.reward_computing_helper(
+        return self.reward_computing_helper(
             battle, fainted_value=2, hp_value=1, victory_value=30
         )
 
+
 def rllib_env_creator(env_config):
-    return env_config["instance"]
-
-def rllib_training(player, trainer, n_iters, save_freq, save_dir):
-    for i in range(n_iters):
-        trainer.train()
-        if (i % save_freq) == 0:
-            trainer.save(save_dir) 
-
-    # This call will finished eventual unfinshed battles before returning
-    player.complete_current_battle()
-
-def rllib_evaluation(player, trainer, nb_episodes):
-    # Reset battle statistics
-    player.reset_battles()
-
-    for i in range(nb_episodes):
-        done = False
-        obs = player.reset()
-        while not done:
-            action = trainer.compute_action(obs)
-            obs, reward, done, info = player.step(action)
-    
-    print(
-        "Player Evaluation: %d victories out of %d episodes"
-        % (player.n_won_battles, nb_episodes)
-    )
+    return RllibGen8SinglePlayer(**env_config)
