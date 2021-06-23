@@ -27,7 +27,7 @@ training:
 
     # === ENVIRONMENT CONFIG ===
     #  /!\ The env should be registered in train script
-    # env: pokeEnv
+    env: pokeEnv
     env_config:
       battle_format: gen8randombattle
 
