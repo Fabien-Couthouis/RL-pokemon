@@ -4,20 +4,26 @@ Bot for pokemon showdown using reinforcement learning (in progress)
 
 ## Installation
 
+Install `poke-rl` Anaconda environment:
+
 ```bash
-pip3 install -e showdown-client
-pip3 install -e gym-showdown
+conda env create -f environment.yml
 ```
 
 ## Launch local showdown client
+
+Install [NodeJS](https://nodejs.org/en/) if it is not installed on your machine.
 ```bash
+
 cd pokemon-showdown
 node pokemon-showdown start --no-security
 ```
 
 
 ## Launch training
+
 Launch a training with config specified in [config.yaml](config/config.yaml) config file:
 ```bash
+conda activate poke-rl
 python train.py
 ```
