@@ -1,6 +1,8 @@
 import numpy as np
 from gym import spaces
 from poke_env.player.env_player import Gen8EnvSinglePlayer
+from typing import Any, Callable, List, Optional, Tuple, Union
+from env.metric_handler import MetricsHandler
 
 
 class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
@@ -8,6 +10,7 @@ class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
         Gen8EnvSinglePlayer.__init__(self)
         self._action_space = spaces.Discrete(22)
         self._observation_space = spaces.Box(low=-10, high=10, shape=(10,))
+        self._metric_handler = MetricsHandler(self)
 
     @property
     def action_space(self):
@@ -53,6 +56,16 @@ class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
         return self.reward_computing_helper(
             battle, fainted_value=2, hp_value=1, victory_value=30
         )
+
+    def reset(self) -> Any:
+        observation = super().reset()
+        return observation
+
+    def step(self, action: int) -> Tuple:
+        observation, reward, done, info = super().step(action)
+        info["metrics"] = self._metric_handler.step_metrics(done)
+
+        return observation, reward, done, info
 
 
 def rllib_env_creator(env_config):
