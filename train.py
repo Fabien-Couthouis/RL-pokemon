@@ -1,4 +1,5 @@
 import time
+from functools import partial
 from pathlib import Path
 from typing import Dict
 
@@ -6,9 +7,13 @@ import ray
 import yaml
 from gym import logger
 from poke_env.player.random_player import RandomPlayer
+from ray.rllib.agents.callbacks import MultiCallbacks
+from ray.tune.logger import pretty_print
 from ray.tune.registry import get_trainable_cls, register_env
 
-from env.rllib_env_wrapper import (RllibGen8SinglePlayer, rllib_env_creator)
+from callbacks.metrics import MetricsCallbacks
+from callbacks.tbx_callback import TBXCallback
+from env.rllib_env_wrapper import RllibGen8SinglePlayer, rllib_env_creator
 
 CONFIG_FILE = Path("configs/config.yaml")
 
@@ -20,7 +25,7 @@ def load_config():
     return config
 
 
-def load_trainer(config: Dict):
+def load_trainer(config: Dict, exp_dir: Path):
     training_config = config["training"]
     run = training_config["run"]
     common_config = training_config["common_config"]
@@ -29,7 +34,10 @@ def load_trainer(config: Dict):
     Trainer = get_trainable_cls(run)
     # Merge common_config and agent_specific_config
     trainer_config = dict(common_config, **agent_specific_config)
-    trainer = Trainer(config=trainer_config, env=RllibGen8SinglePlayer)  # env=
+    # Add metric callback
+    trainer_config["callbacks"] = MultiCallbacks([MetricsCallbacks,
+                                                  partial(TBXCallback, logdir=str(exp_dir))])
+    trainer = Trainer(config=trainer_config)
     return trainer
 
 
@@ -38,7 +46,10 @@ def train(player, trainer, n_iters, checkpoint_freq, exp_dir):
         result = trainer.train()
         if (i % checkpoint_freq) == 0:
             trainer.save(exp_dir)
-        print(f"End of iter {i}: {result}", "\n"*10)
+
+        pretty_result = pretty_print(result)
+
+        print(f"{pretty_result}\n\n End of iter {i}.")
         # TODO: better logging with losses, rewards, win ratio...
         # it is possible to use the function from Tune to build the array
 
@@ -69,7 +80,6 @@ def launch_training():
 
     # Load some stuff before training
     config = load_config()
-    trainer = load_trainer(config)
 
     training_config = config["training"]
     # TODO: use other stop criterions?
@@ -79,10 +89,10 @@ def launch_training():
         training_config["local_dir"],
         f'{training_config["name"]}-{time.strftime("%Y %m %d-%H %M %S")}'
     )
-    # TODO: callbacks to log useful metrics: win ratio...
     exp_dir.mkdir(parents=True, exist_ok=True)
 
     # Training
+    trainer = load_trainer(config, exp_dir)
     env_player = trainer.workers.local_worker().env
     # TODO: make this configurable
     opponent = RandomPlayer()
