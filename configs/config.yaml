@@ -15,14 +15,14 @@ training:
   ## ======== COMMON CONFIG ======== 
   # See https://docs.ray.io/en/master/rllib-training.html#common-parameters
   common_config:
-    framework: tf
+    framework: torch
     eager_tracing: False
     log_level: WARNING
     # Training will not work with poke-env if this value != 0
     num_workers: 0
     num_envs_per_worker: 1
     num_cpus_per_worker: 1
-    num_gpus: 1
+    # num_gpus: 1
     gamma: 0.99
 
     # === ENVIRONMENT CONFIG ===
@@ -33,9 +33,9 @@ training:
 
     # === MODEL CONFIG ===
     model: 
-      fcnet_hiddens: [256, 256]
-      fcnet_activation: tanh
-      vf_share_layers: False
+      custom_model: poke_model
+      custom_model_config: 
+        dense_size: 64
 
   ## ======== AGENT SPECIFIC CONFIG ======== 
   # You can override common config if needed
