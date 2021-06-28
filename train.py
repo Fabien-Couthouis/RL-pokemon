@@ -8,12 +8,14 @@ import yaml
 from gym import logger
 from poke_env.player.random_player import RandomPlayer
 from ray.rllib.agents.callbacks import MultiCallbacks
+from ray.rllib.models import ModelCatalog
 from ray.tune.logger import pretty_print
 from ray.tune.registry import get_trainable_cls, register_env
 
 from callbacks.metrics import MetricsCallbacks
 from callbacks.tbx_callback import TBXCallback
 from env.rllib_env_wrapper import RllibGen8SinglePlayer, rllib_env_creator
+from models.poke_model import PokeModel
 
 CONFIG_FILE = Path("configs/config.yaml")
 
@@ -77,6 +79,7 @@ def evaluate(player, trainer, nb_episodes):
 def launch_training():
     ray.init(ignore_reinit_error=True)
     register_env("pokeEnv", rllib_env_creator)
+    ModelCatalog.register_custom_model("poke_model", PokeModel)
 
     # Load some stuff before training
     config = load_config()
