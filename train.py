@@ -11,6 +11,7 @@ from ray.rllib.agents.callbacks import MultiCallbacks
 from ray.rllib.models import ModelCatalog
 from ray.tune.logger import pretty_print
 from ray.tune.registry import get_trainable_cls, register_env
+from tabulate import tabulate
 
 from callbacks.metrics import MetricsCallbacks
 from callbacks.tbx_callback import TBXCallback
@@ -43,17 +44,36 @@ def load_trainer(config: Dict, exp_dir: Path):
     return trainer
 
 
+def create_result_table(result: Dict, round_decimal=2):
+    result_keys = ["training_iteration", "episodes_total", "time_total_s",
+                   "episode_len_mean", "episode_reward_mean"]
+    learner_stats = result["info"]["learner"]["default_policy"]["learner_stats"]
+    learner_stats_keys = ["policy_loss", "vf_loss"]
+    custom_metrics = result["custom_metrics"]
+    custom_metrics_keys = ["won_mean"]
+
+    table = []
+    for key in result_keys:
+        table.append([key, round(result[key], round_decimal)])
+    for key in learner_stats_keys:
+        table.append([key, round(learner_stats[key], round_decimal)])
+    for key in custom_metrics_keys:
+        table.append([key, round(custom_metrics[key], round_decimal)])
+
+    return table
+
+
 def train(player, trainer, n_iters, checkpoint_freq, exp_dir):
     for i in range(n_iters):
         result = trainer.train()
         if (i % checkpoint_freq) == 0:
             trainer.save(exp_dir)
 
-        pretty_result = pretty_print(result)
+        # pretty_result = pretty_print(result)
+        # print(f"{pretty_result}\n\n End of iter {i}.")
 
-        print(f"{pretty_result}\n\n End of iter {i}.")
-        # TODO: better logging with losses, rewards, win ratio...
-        # it is possible to use the function from Tune to build the array
+        result_table = create_result_table(result)
+        print(tabulate(result_table, tablefmt="pretty"))
 
     # This call will finished eventual unfinshed battles before returning
     player.complete_current_battle()
@@ -109,16 +129,13 @@ def launch_training():
             "exp_dir": exp_dir
         })
 
-    print("Finished training")
-    print("Starting evaluation...")
-
     # Evaluation
-    # TODO: evaluate agent during training?
-    env_player.play_against(
-        env_algorithm=evaluate,
-        opponent=opponent,
-        env_algorithm_kwargs={"trainer": trainer, "nb_episodes": 10}
-    )
+
+    # env_player.play_against(
+    #     env_algorithm=evaluate,
+    #     opponent=opponent,
+    #     env_algorithm_kwargs={"trainer": trainer, "nb_episodes": 10}
+    # )
 
 
 def main():
