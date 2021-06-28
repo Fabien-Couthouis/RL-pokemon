@@ -8,6 +8,12 @@ Install `poke-rl` Anaconda environment:
 
 ```bash
 conda env create -f environment.yml
+
+```
+
+Install this module:
+```bash
+pip install e .
 ```
 
 ## Launch local showdown client
