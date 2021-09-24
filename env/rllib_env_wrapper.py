@@ -9,7 +9,7 @@ class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
     def __init__(self, *args, **kwargs):
         Gen8EnvSinglePlayer.__init__(self)
         self._action_space = spaces.Discrete(22)
-        self._observation_space = spaces.Box(low=-10, high=10, shape=(10,))
+        self._observation_space = spaces.Box(low=-10, high=10, shape=(10,), dtype=np.float64) # RLLIB casts observations to float64 while default dtype for Box is float32
         self._metric_handler = MetricsHandler(self)
 
     @property
