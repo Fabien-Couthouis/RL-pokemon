@@ -1,3 +1,5 @@
+import asyncio
+from threading import Thread
 import numpy as np
 from gym import spaces
 from poke_env.player.env_player import Gen8EnvSinglePlayer
@@ -66,6 +68,37 @@ class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
         info["metrics"] = self._metric_handler.step_metrics(done)
 
         return observation, reward, done, info
+    
+    def challenge_user(self, env_algorithm, user_to_challenge, env_algorithm_kwargs=None):
+        self._start_new_battle = True
+
+        async def launch_battles(player):
+            await player.send_challenges(opponent=user_to_challenge, n_challenges=1)
+
+        def env_algorithm_wrapper(player, kwargs):
+            env_algorithm(player, **kwargs)
+
+            player._start_new_battle = False
+            while True:
+                try:
+                    player.complete_current_battle()
+                    player.reset()
+                except OSError:
+                    break
+
+        loop = asyncio.get_event_loop()
+
+        if env_algorithm_kwargs is None:
+            env_algorithm_kwargs = {}
+
+        thread = Thread(
+            target=lambda: env_algorithm_wrapper(self, env_algorithm_kwargs)
+        )
+        thread.start()
+
+        while self._start_new_battle:
+            loop.run_until_complete(launch_battles(self))
+        thread.join()
 
 
 def rllib_env_creator(env_config):
