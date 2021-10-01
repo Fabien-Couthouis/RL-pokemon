@@ -118,10 +118,10 @@ def launch_training():
     trainer = load_trainer(config, exp_dir)
     env_player = trainer.workers.local_worker().env
     # TODO: make this configurable
-    opponent = RandomPlayer()
-    env_player.play_against(
+    opponent = "hardcoded_bot_3340"
+    env_player.challenge_user(
         env_algorithm=train,
-        opponent=opponent,
+        user_to_challenge=opponent,
         env_algorithm_kwargs={
             "trainer": trainer,
             "n_iters": n_iters,
