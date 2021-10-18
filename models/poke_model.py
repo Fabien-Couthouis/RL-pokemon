@@ -35,6 +35,11 @@ class PokeModel(TorchModelV2, nn.Module):
     @override(TorchModelV2)
     def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType) -> Tuple[TensorType, List[TensorType]]:
         obs = input_dict["obs"]
+
+        if type(obs) != torch.Tensor:
+            print(obs)
+            obs = torch.zeros((10,)).float()   
+
         x = F.relu(self._l1(obs))
         x = F.relu(self._l2(x))
 
