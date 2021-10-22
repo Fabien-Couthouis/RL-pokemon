@@ -105,6 +105,8 @@ def launch_training():
     config = load_config()
 
     training_config = config["training"]
+    training_config["use_lstm"] = True
+    training_config["lstm_cell_size"] = 64
     # TODO: use other stop criterions?
     n_iters = training_config["stop"]["training_iteration"]
     checkpoint_freq = training_config["checkpoint_freq"]
