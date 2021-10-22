@@ -4,7 +4,7 @@ import numpy as np
 from gym import spaces
 from poke_env.player.env_player import Gen8EnvSinglePlayer
 from typing import Any, Callable, List, Optional, Tuple, Union
-from env.metric_handler import MetricsHandler
+from env.metrics import MetricsHandler
 
 
 class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
