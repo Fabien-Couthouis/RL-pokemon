@@ -27,6 +27,7 @@ class PokeLSTM(RecurrentNetwork):
 
         # Build the Module from fc + LSTM + 2xfc (action + value outs).
         self.fc1 = nn.Linear(self.obs_size, self.fc_size)
+        self.fc2 = nn.Linear(self.fc1.out_features, self.fc_size)
         self.lstm = nn.LSTM(
             self.fc_size, self.lstm_state_size, batch_first=True)
         self.action_branch = nn.Linear(self.lstm_state_size, num_outputs)
@@ -41,7 +42,9 @@ class PokeLSTM(RecurrentNetwork):
         # Place hidden states on same device as model.
         h = [
             self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
-            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0)
+            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
+            self.fc2.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
+            self.fc2.weight.new(1, self.lstm_state_size).zero_().squeeze(0)
         ]
         return h
 
@@ -61,6 +64,7 @@ class PokeLSTM(RecurrentNetwork):
             The state batches as a List of two items (c- and h-states).
         """
         x = nn.functional.relu(self.fc1(inputs))
+        x = nn.functional.relu(self.fc2(x))
         self._features, [h, c] = self.lstm(
             x, [torch.unsqueeze(state[0], 0),
                 torch.unsqueeze(state[1], 0)])
