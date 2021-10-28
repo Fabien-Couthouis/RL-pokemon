@@ -16,7 +16,7 @@ from tabulate import tabulate
 from callbacks.metrics import MetricsCallbacks
 from callbacks.tbx_callback import TBXCallback
 from env.rllib_env_wrapper import RllibGen8SinglePlayer, rllib_env_creator
-from models.poke_model import PokeModel
+from models.rnn_model import PokeLSTM
 
 CONFIG_FILE = Path("configs/config.yaml")
 
@@ -99,14 +99,12 @@ def evaluate(player, trainer, nb_episodes):
 def launch_training():
     ray.init(ignore_reinit_error=True)
     register_env("pokeEnv", rllib_env_creator)
-    ModelCatalog.register_custom_model("poke_model", PokeModel)
+    ModelCatalog.register_custom_model("poke_model", PokeLSTM)
 
     # Load some stuff before training
     config = load_config()
 
     training_config = config["training"]
-    training_config["use_lstm"] = True
-    training_config["lstm_cell_size"] = 64
     # TODO: use other stop criterions?
     n_iters = training_config["stop"]["training_iteration"]
     checkpoint_freq = training_config["checkpoint_freq"]

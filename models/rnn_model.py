@@ -1,4 +1,3 @@
-import numpy as np
 from ray.rllib.utils.framework import try_import_torch
 from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.models.modelv2 import ModelV2
@@ -7,7 +6,7 @@ from ray.rllib.models.torch.recurrent_net import RecurrentNetwork
 
 torch, nn = try_import_torch()
 
-class PokeLSTM(RecurrentNetwork):
+class PokeLSTM(RecurrentNetwork, nn.Module):
 
     def __init__(self,
                  obs_space,
@@ -15,15 +14,14 @@ class PokeLSTM(RecurrentNetwork):
                  num_outputs,
                  model_config,
                  name,
-                 fc_size=64,
-                 lstm_state_size=256):
+                 **custom_model_config):
         nn.Module.__init__(self)
         super().__init__(obs_space, action_space, num_outputs, model_config,
                          name)
 
         self.obs_size = get_preprocessor(obs_space)(obs_space).size
-        self.fc_size = fc_size
-        self.lstm_state_size = lstm_state_size
+        self.fc_size = custom_model_config["dense_size"]
+        self.lstm_state_size = custom_model_config["lstm_state_size"]
 
         # Build the Module from fc + LSTM + 2xfc (action + value outs).
         self.fc1 = nn.Linear(self.obs_size, self.fc_size)
@@ -42,9 +40,7 @@ class PokeLSTM(RecurrentNetwork):
         # Place hidden states on same device as model.
         h = [
             self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
-            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
-            self.fc2.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
-            self.fc2.weight.new(1, self.lstm_state_size).zero_().squeeze(0)
+            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0)
         ]
         return h
 

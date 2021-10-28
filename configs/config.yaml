@@ -32,10 +32,11 @@ training:
       battle_format: gen8randombattle
 
     # === MODEL CONFIG ===
-    model: 
+    model:
       custom_model: poke_model
       custom_model_config: 
         dense_size: 64
+        lstm_state_size: 256
 
   ## ======== AGENT SPECIFIC CONFIG ======== 
   # You can override common config if needed
@@ -88,7 +89,7 @@ training:
       # Whether to rollout complete_episodes or truncate_episodes.
       batch_mode: truncate_episodes
       # Which observation filter to apply to the observation.
-      observation_filter: NoFilter     
+      observation_filter: NoFilter
 
     IMPALA:
       ## ======== IMPALA SPECIFIC CONFIG ======== 
