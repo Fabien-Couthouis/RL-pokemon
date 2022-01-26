@@ -61,6 +61,8 @@ class RllibGen8SinglePlayer(Gen8EnvSinglePlayer):
 
     def reset(self) -> Any:
         observation = super().reset()
+        if observation is None:
+            observation = self.observation_space.sample()
         return observation
 
     def step(self, action: int) -> Tuple:
