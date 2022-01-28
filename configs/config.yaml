@@ -3,9 +3,9 @@ training:
   # Run name
   name: PPO-1
   checkpoint_freq: 200
-  resume: False
+  resume: True
   # Directory to write logs in
-  local_dir: ./results
+  local_dir: "./results/"
   stop:
       # Time limit per trial (in seconds)
       # time_total_s: 20000 
@@ -87,7 +87,7 @@ training:
       # Target value for KL divergence.
       kl_target: 0.01
       # Whether to rollout complete_episodes or truncate_episodes.
-      batch_mode: truncate_episodes
+      batch_mode: complete_episodes
       # Which observation filter to apply to the observation.
       observation_filter: NoFilter
 
