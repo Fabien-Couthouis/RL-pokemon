@@ -99,7 +99,7 @@ def evaluate(player, trainer, nb_episodes):
 def launch_training():
     ray.init(ignore_reinit_error=True)
     register_env("pokeEnv", rllib_env_creator)
-    ModelCatalog.register_custom_model("poke_model", PokeLSTM)
+    ModelCatalog.register_custom_model("poke_lstm", PokeLSTM)
 
     # Load some stuff before training
     config = load_config()

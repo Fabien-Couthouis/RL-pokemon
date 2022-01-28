@@ -22,7 +22,7 @@ training:
     num_workers: 0
     num_envs_per_worker: 1
     num_cpus_per_worker: 1
-    # num_gpus: 1
+    #num_gpus: 1
     gamma: 0.99
 
     # === ENVIRONMENT CONFIG ===
@@ -33,7 +33,7 @@ training:
 
     # === MODEL CONFIG ===
     model:
-      custom_model: poke_model
+      custom_model: poke_lstm
       custom_model_config: 
         dense_size: 64
         lstm_state_size: 256
@@ -58,7 +58,7 @@ training:
       # Size of batches collected from each worker.
       rollout_fragment_length: 256
       # Number of timesteps collected for each SGD round.
-      train_batch_size: 256
+      train_batch_size: 2048
       # Total SGD batch size across all devices for SGD. This defines the
       # minibatch size within each epoch.
       sgd_minibatch_size: 256
@@ -66,7 +66,7 @@ training:
       shuffle_sequences: True
       # Number of SGD iterations in each outer loop (i.e. number of epochs to
       # execute per train batch).
-      num_sgd_iter: 10
+      num_sgd_iter: 30
       lr: 2.e-4
       # Learning rate schedule.
       lr_schedule: null
