@@ -48,7 +48,7 @@ def create_result_table(result: Dict, round_decimal=2):
     result_keys = ["training_iteration", "episodes_total", "time_total_s",
                    "episode_len_mean", "episode_reward_mean"]
     learner_stats = result["info"]["learner"]["default_policy"]["learner_stats"]
-    learner_stats_keys = ["policy_loss", "vf_loss"]
+    learner_stats_keys = learner_stats.keys() #["policy_loss", "vf_loss"]
     custom_metrics = result["custom_metrics"]
     custom_metrics_keys = ["won_mean"]
 
